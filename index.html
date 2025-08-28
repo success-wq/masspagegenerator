@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#3949ff">
+  <title>SEO Automation System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <!-- CSV Parser (Papa Parse) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <h1 class="hero__title">SEO Automation System</h1>
+      <p class="hero__subtitle">Transform your SEO strategy with automated site architecture and content planning</p>
+    </div>
+  </header>
+
+  <main class="container app">
+    <!-- Progress Indicator -->
+    <section class="progress" aria-label="Progress">
+      <div class="progress__track">
+        <div class="progress__step" data-step="0">1</div>
+        <div class="progress__bar" aria-hidden="true"></div>
+        <div class="progress__step" data-step="1">2</div>
+        <div class="progress__bar" aria-hidden="true"></div>
+        <div class="progress__step" data-step="2">3</div>
+        <div class="progress__bar" aria-hidden="true"></div>
+        <div class="progress__step" data-step="3">4</div>
+      </div>
+      <div class="progress__labels">
+        <span>Upload</span>
+        <span>Preview</span>
+        <span>Process</span>
+        <span>Export</span>
+      </div>
+    </section>
+
+    <!-- Step 1: Upload -->
+    <section id="step-upload" class="card step is-active" aria-labelledby="upload-title">
+      <header class="card__header">
+        <h2 id="upload-title">Upload Your CSV File</h2>
+        <p class="muted">Upload a CSV containing your website URLs, keywords, and geographic areas</p>
+      </header>
+
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload CSV via drag and drop or click">
+        <div class="dropzone__icon" aria-hidden="true">📤</div>
+        <div class="dropzone__text">
+          <p class="dropzone__title">Drop your CSV file here</p>
+          <p class="muted">or click to browse files</p>
+        </div>
+        <input id="file-input" type="file" accept=".csv" hidden>
+      </div>
+
+      <div id="upload-success" class="alert alert--success is-hidden" role="status">
+        <div class="alert__icon" aria-hidden="true">✅</div>
+        <div class="alert__content">
+          <div class="alert__title">File uploaded successfully!</div>
+          <div class="alert__desc"><span id="row-count">0</span> rows of data found</div>
+          <button id="to-preview" class="btn btn--primary btn--sm">Preview Data →</button>
+        </div>
+      </div>
+
+      <div class="callout">
+        <h3 class="callout__title">Expected CSV Format</h3>
+        <ul class="callout__list">
+          <li><strong>url</strong>: Website URL (e.g., https://example.com)</li>
+          <li><strong>primary_keywords</strong>: Main keywords (comma-separated)</li>
+          <li><strong>secondary_keywords</strong>: Additional keywords (comma-separated)</li>
+          <li><strong>primary_geo</strong>: Main geographic area</li>
+          <li><strong>secondary_geo</strong>: Additional areas (comma-separated)</li>
+        </ul>
+        <button id="load-demo" class="btn btn--accent btn--sm">Load Demo Data</button>
+      </div>
+    </section>
+
+    <!-- Step 2: Preview -->
+    <section id="step-preview" class="card step" aria-labelledby="preview-title">
+      <header class="card__header card__header--row">
+        <div>
+          <h2 id="preview-title">Review Your Data</h2>
+          <p class="muted">Select which rows to process for SEO automation</p>
+        </div>
+        <div class="muted"><span id="selected-count">0</span> selected</div>
+      </header>
+
+      <div class="toolbar">
+        <div class="toolbar__group">
+          <input id="filter-input" class="input" type="search" placeholder="Filter by URL or keyword..." aria-label="Filter rows">
+        </div>
+        <div class="toolbar__group">
+          <button id="back-from-preview" class="btn btn--ghost">← Back</button>
+          <button id="to-process" class="btn btn--primary" disabled>Process Selected Rows →</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" id="preview-table">
+          <thead>
+            <tr>
+              <th style="width:42px;"><input id="select-all" type="checkbox" aria-label="Select all"></th>
+              <th data-sort="url">URL <button class="sort" aria-label="Sort by URL">⇅</button></th>
+              <th data-sort="primary_keywords">Primary Keywords <button class="sort" aria-label="Sort by primary keywords">⇅</button></th>
+              <th data-sort="primary_geo">Geographic Area <button class="sort" aria-label="Sort by geo">⇅</button></th>
+              <th>Business Type</th>
+            </tr>
+          </thead>
+          <tbody id="preview-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Step 3: Process -->
+    <section id="step-process" class="step">
+      <div id="process-ready" class="card is-active">
+        <div class="card__body center">
+          <div class="emoji" aria-hidden="true">⚡</div>
+          <h3>Ready to Generate SEO Strategy</h3>
+          <p class="muted">This will analyze your data and create site architecture, internal links, content outlines, and keyword mapping.</p>
+          <button id="start-process" class="btn btn--primary">Generate SEO Strategy</button>
+        </div>
+      </div>
+
+      <div id="processing" class="card is-hidden">
+        <div class="card__body center">
+          <div class="spinner" aria-hidden="true"></div>
+          <h3>Processing Your Data...</h3>
+          <p class="muted">This may take a few moments</p>
+        </div>
+      </div>
+
+      <div id="process-results" class="is-hidden">
+        <div class="alert alert--success">
+          <div class="alert__icon" aria-hidden="true">✅</div>
+          <div class="alert__content">
+            <div class="alert__title">SEO Strategy Generated Successfully!</div>
+            <div class="alert__desc">Processed <span id="processed-count">0</span> websites with complete SEO recommendations</div>
+          </div>
+        </div>
+
+        <div id="results-list" class="results"></div>
+
+        <div class="toolbar toolbar--end">
+          <button id="back-from-process" class="btn btn--ghost">← Back</button>
+          <button id="to-export" class="btn btn--primary">Export Results →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 4: Export -->
+    <section id="step-export" class="card step" aria-labelledby="export-title">
+      <header class="card__header">
+        <h2 id="export-title">Export Your SEO Strategy</h2>
+        <p class="muted">Download your complete SEO automation results</p>
+      </header>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat__icon" aria-hidden="true">🌐</div>
+          <div class="stat__value" id="stat-sites">0</div>
+          <div class="stat__label">Websites Processed</div>
+        </div>
+        <div class="stat">
+          <div class="stat__icon" aria-hidden="true">📚</div>
+          <div class="stat__value" id="stat-pages">0</div>
+          <div class="stat__label">Pages Planned</div>
+        </div>
+        <div class="stat">
+          <div class="stat__icon" aria-hidden="true">📝</div>
+          <div class="stat__value" id="stat-outlines">0</div>
+          <div class="stat__label">Content Outlines</div>
+        </div>
+      </div>
+
+      <div class="grid grid--3">
+        <button id="download-json" class="btn btn--primary">Download JSON</button>
+        <button id="download-csv" class="btn btn--success">Download CSV</button>
+        <button id="download-md" class="btn btn--accent">Download Markdown</button>
+      </div>
+
+      <div class="muted small mt-2">
+        <p><strong>JSON:</strong> Complete data structure for developers</p>
+        <p><strong>CSV:</strong> Content plan spreadsheet for content teams</p>
+        <p><strong>Markdown:</strong> Human-readable strategy report</p>
+      </div>
+
+      <div class="toolbar toolbar--end mt-4">
+        <button id="back-from-export" class="btn btn--ghost">← Back</button>
+        <button id="start-over" class="btn btn--dark">Start New Project</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <span class="muted small">© <span id="year"></span> SEO Automation System</span>
+    </div>
+  </footer>
+
+  <script defer src="./app.js"></script>
+</body>
+</html> 
